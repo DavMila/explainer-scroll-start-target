@@ -1,17 +1,46 @@
 # Explainer: scroll-start-target
 
 ## Introduction
-This is an explainer for `scroll-start-target` which is a CSS property that
+This is an explainer for `scroll-start-target`: a CSS property that
 gives web authors the ability to set the initial scroll offset of a scrollable
 container by indicating content that the container should be initially scrolled
 to.
 
 ### Background
 Web authors often wish to have scrollable containers scrolled away from the
-default (0,0) position when the container first appears on screen. This could be
-, for example, to reflect some state of the page which might make some of the
+default (0,0) position when the container first appears on screen. This could be,
+for example, to reflect some state of the page which might make some of the
 scrollable container's content more relevant than other content within the
-container. They can achieve this by using one of JavaScript's scrolling APIs to
+container. In some other cases, websites would like to present users with content first,
+and then have them scroll up to reveal an item, e.g. a search bar like in [iOS's Messages app](https://apple.stackexchange.com/questions/441349/how-to-pull-down-the-screen-to-reveal-the-search-bar-in-iphone-messages),
+and in [Spotify](https://photos.app.goo.gl/ejDjf3KwVqiATcGj8).
+
+On the web, one way to achieve this is via [fragment identifiers](https://developer.mozilla.org/en-US/docs/Web/API/Location/hash#:~:text=fragment%20identifier) in anchor links, but this method has the
+constraint of being able to target only one item.
+
+Another approach is to [create a temporary CSS animation](https://blog.kizu.dev/snappy-scroll-start/#the-scroll-start-workaround) which briefly modifies
+the [`scroll-snap-align`](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-align) property of the target item so as to cause a scroll to it:
+```
+.container {
+  ...
+  scroll-snap-type: x mandatory;
+}
+
+.target {
+  ...
+  animation: --snap 0.01s linear;
+}
+
+@keyframes --snap {
+	from {
+		scroll-snap-align: start;	
+	}
+}
+```
+This approach is rather brittle and would not work well in a scenario where the target
+is to remain in view even through layout changes occurring as the page loads.
+
+Another way is to use one of JavaScript's scrolling APIs, e.g. [scrollIntoView](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView), to
 bring the relevant content into view after the page has been loaded. However, using
 JavaScript to achieve the desired style of a page is often less than ideal
 as it can result in degraded performance and can be prone to error. For example,
@@ -29,8 +58,8 @@ window.onload = () => {
   ...
 }
 ```
-as the window `load` event will only fire once. They will need to:
-- detect the occurrence of layout changes that might result in their desired
+as the window `load` event will only fire once. The author will need to:
+- detect the occurrence of layout changes that  result in their desired
   element not being scrolled into view, and
 - invoke `scrollIntoView` again.
 
@@ -46,17 +75,27 @@ like in the gallery example below.
 ### Proposal
 Introduce a CSS property called `scroll-start-target` which can be used to
 indicate that the scroll container of the affected element (the `target`)
-should, on its initial appearance in the page, be scrolled to the `target`.
+should, on its initial appearance/layout in the page, be scrolled to the `target`.
+
+After the user agent detects an "explicit" scroll on the scroll container,
+`scroll-start-target` isn't active anymore and the scroll container can be
+freely scrolled. An explicit scroll would be any scroll arising from a user's gesture,
+or a programmatic scroll API.
+
+`scroll-start-target` is also not to interfere with scrolling due to a
+[fragment identifiers](https://developer.mozilla.org/en-US/docs/Web/API/Location/hash#:~:text=fragment%20identifier) in a URL.
 
 ### Use Cases
 - an image gallery that ought to start with the middle image in view,
+- a page in which the author would like to first present content to the user and
+  then have them scroll upwards to reveal a searchbar,
 - a menu/list of options which starts scrolled to a user's previously-selected choices,
 - a menu/list of options among which the author predicts some to be
   more relevant to the user than others due, perhaps, to prior user activity,
 - a long page where the author wants to save the user the effort of scrolling to
   a particular section.
 
-## Example
+## Examples
 
 ### User Settings
 In this [example](https://davmila.github.io/demo-scroll-start-target/drones/index.html)
@@ -93,7 +132,7 @@ The `scroll-start-target` property takes one parameter whose only valid values a
 ...
 ```
 
-## Considerations & Trade-Offs
+## Alternatives & Other Considerations
 
 ### Per-axis Parameters
 One alternative option for `scroll-start-target`'s syntax would allow specifying
@@ -131,3 +170,9 @@ same as only scrolling to the first in DOM order. However, these steps are
 chosen in a way that will work well with a potential future css property that
 allow a `nearest` scroll alignment similar to [scrollIntoView](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView)'s `nearest`
 argument so that the reverse-DOM order procedure can be closer to "best effort."
+
+As an example of a situation where a developer might want multiple `scroll-start-target`s
+consider this [demo](https://davmila.github.io/demo-scroll-start-target/todo/index.html) where the "done" items in the TODO list
+are all `scroll-start-target`s. When the user dismisses a done item, the next
+one, by virtue of being a `scroll-start-target`, comes into view, making the process
+of dismissing all done items very convenient for the user.
