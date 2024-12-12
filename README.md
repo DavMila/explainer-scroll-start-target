@@ -1,7 +1,7 @@
-# Explainer: scroll-start-target
+# Explainer: scroll-initial-target
 
 ## Introduction
-This is an explainer for `scroll-start-target`: a CSS property that
+This is an explainer for `scroll-initial-target`: a CSS property that
 gives web authors the ability to set the initial scroll offset of a scrollable
 container by indicating content that the container should be initially scrolled
 to.
@@ -47,7 +47,7 @@ as it can result in degraded performance and can be prone to error. For example,
 similar to [scroll anchoring](https://developer.mozilla.org/en-US/docs/Web/CSS/overflow-anchor/Guide_to_scroll_anchoring),
 web authors would need to account for the dynamic way in which content is fetched and
 loaded into a page such that changes in the layout of the page are necessary.
-This means that: to achieve the intended effect of `scroll-start-target`, it may
+This means that: to achieve the intended effect of `scroll-initial-target`, it may
 not be enough to write:
 
 ```
@@ -65,7 +65,7 @@ as the window `load` event will only fire once. The author will need to:
 
 If using `scrollIntoView` to keep a particular element in view, the author would
 also need to be mindful of interfering with a scrolling gesture from their user
-i.e. if the user has scrolled away from the targeted content, `scroll-start-target`
+i.e. if the user has scrolled away from the targeted content, `scroll-initial-target`
 no longer keeps the scroll container anchored to the content.
 
 Additionally, the scrollable container in question may not appear on the page
@@ -73,16 +73,16 @@ until after the `load` event, e.g. until a user clicks a "Show Gallery" button
 like in the gallery example below.
 
 ### Proposal
-Introduce a CSS property called `scroll-start-target` which can be used to
+Introduce a CSS property called `scroll-initial-target` which can be used to
 indicate that the scroll container of the affected element (the `target`)
 should, on its initial appearance/layout in the page, be scrolled to the `target`.
 
 After the user agent detects an "explicit" scroll on the scroll container,
-`scroll-start-target` isn't active anymore and the scroll container can be
+`scroll-initial-target` isn't active anymore and the scroll container can be
 freely scrolled. An explicit scroll would be any scroll arising from a user's gesture,
 or a programmatic scroll API.
 
-`scroll-start-target` is also not to interfere with scrolling due to a
+`scroll-initial-target` is also not to interfere with scrolling due to a
 [fragment identifiers](https://developer.mozilla.org/en-US/docs/Web/API/Location/hash#:~:text=fragment%20identifier) in a URL.
 
 ### Use Cases
@@ -108,8 +108,8 @@ button is clicked after which the gallery is revealed and is scrolled to the
 middle image.
 
 ## Syntax
-The `scroll-start-target` property takes one parameter whose only valid values are:
-- `auto`, indicating the element should be scrolled to, and
+The `scroll-initial-target` property takes one parameter whose only valid values are:
+- `nearest`, indicating the element should be scrolled to, and
 - `none`, the default value, indicating the element isn't to be scrolled to.
 
 ```
@@ -118,7 +118,7 @@ The `scroll-start-target` property takes one parameter whose only valid values a
     overflow-x: scroll;
 }
 .target {
-    scroll-start-target: [auto|none];
+    scroll-initial-target: [nearest|none];
 }
 </style>
 ...
@@ -135,35 +135,35 @@ The `scroll-start-target` property takes one parameter whose only valid values a
 ## Alternatives & Other Considerations
 
 ### Per-axis Parameters
-One alternative option for `scroll-start-target`'s syntax would allow specifying
+One alternative option for `scroll-initial-target`'s syntax would allow specifying
 values for the block and inline axes separately:
 ```
 <style>
 ...
 div {
-    scroll-start-target: <block> <inline>;
+    scroll-initial-target: <block> <inline>;
 }
 ...
 </style>
 ```
-where `<block>` and `<inline>` could independently be `auto` or `none`.
+where `<block>` and `<inline>` could independently be `nearest` or `none`.
 By setting the bias on the block and inline axis independently of each other,
 this syntax would make it possible for separate targets to be scrolled to in the
 different axes such that neither target ends up within the scroll container's
-scroll port which runs contrary to the purpose of `scroll-start-target`.
+scroll port which runs contrary to the purpose of `scroll-initial-target`.
 
-### Competing scroll-start-targets
+### Competing scroll-initial-targets
 It is possible for more than one element within the content of a scrollable
-container to have its `scroll-start-target` set to `auto`, meaning the
-scrollable container has to choose which `scroll-start-target` to scroll to.
+container to have its `scroll-initial-target` set to `nearest`, meaning the
+scrollable container has to choose which `scroll-initial-target` to scroll to.
 Overall, user agents are to handle such scenarios by giving priority to the
 element which comes first in [DOM order](https://dom.spec.whatwg.org/#concept-tree-order).
 
-#### Competing `scroll-start-target`s & DOM-order
-While priority is to be given to the `scroll-start-target` which comes first in
+#### Competing `scroll-initial-target`s & DOM-order
+While priority is to be given to the `scroll-initial-target` which comes first in
 DOM order, there is some consideration for a scenario in which the author desires
-a best effort attempt at bringing all the specified `scroll-start-target`s into
-view. Specifically, where mutliple `scroll-start-target`s exist, user agents
+a best effort attempt at bringing all the specified `scroll-initial-target`s into
+view. Specifically, where mutliple `scroll-initial-target`s exist, user agents
 are to scroll to each target in reverse-DOM-order, i.e. starting from the last
 and working their way up to the first. At the moment, this is effectively the
 same as only scrolling to the first in DOM order. However, these steps are
@@ -171,8 +171,8 @@ chosen in a way that will work well with a potential future css property that
 allow a `nearest` scroll alignment similar to [scrollIntoView](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView)'s `nearest`
 argument so that the reverse-DOM order procedure can be closer to "best effort."
 
-As an example of a situation where a developer might want multiple `scroll-start-target`s
+As an example of a situation where a developer might want multiple `scroll-initial-target`s
 consider this [demo](https://davmila.github.io/demo-scroll-start-target/todo/index.html) where the "done" items in the TODO list
-are all `scroll-start-target`s. When the user dismisses a done item, the next
-one, by virtue of being a `scroll-start-target`, comes into view, making the process
+are all `scroll-initial-target`s. When the user dismisses a done item, the next
+one, by virtue of being a `scroll-initial-target`, comes into view, making the process
 of dismissing all done items very convenient for the user.
